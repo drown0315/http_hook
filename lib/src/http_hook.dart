@@ -195,7 +195,13 @@ class HttpHook {
       final match = _matchRule(rule, request.url);
       if (match != null) {
         try {
-          return await rule.handler(request, match);
+          final response = await rule.handler(request, match);
+          // If response is passThrough, continue to next rule or return null
+          // to allow real HTTP request
+          if (response.isPassThrough) {
+            continue;
+          }
+          return response;
         } catch (e) {
           rethrow;
         }

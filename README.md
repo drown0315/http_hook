@@ -175,6 +175,12 @@ HttpHookResponse(
 )
 ```
 
+### Pass-Through Response
+
+```dart
+HttpHookResponse.passThrough()  // Allows real HTTP request to proceed
+```
+
 ## 🕰 Advanced Features
 
 ### Simulating Delays
@@ -217,6 +223,49 @@ HttpHook.on(
     });
   },
 );
+```
+
+### Pass-Through for Real Requests
+
+Sometimes you may want to conditionally mock responses or allow real HTTP requests to proceed. Use `HttpHookResponse.passThrough()` to let the request continue to the real server:
+
+```dart
+HttpHook.onRegex(
+  'http://api.example.com',
+  regex: RegExp(r'^/user/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final userId = match.regexMatch!.group(1);
+    
+    if (userId == 'real') {
+      // Let this request go to the real server
+      return HttpHookResponse.passThrough();
+    } else if (userId == 'mock') {
+      // Return mock data
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': 'Mocked User',
+        'type': 'mock'
+      });
+    } else {
+      // Default mock response
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': 'Default User',
+        'type': 'default'
+      });
+    }
+  },
+);
+
+// This will make a real HTTP request
+final realResponse = await http.get(Uri.parse('http://api.example.com/user/real'));
+
+// This will return mock data
+final mockResponse = await http.get(Uri.parse('http://api.example.com/user/mock'));
+
+// This will return default mock data  
+final defaultResponse = await http.get(Uri.parse('http://api.example.com/user/123'));
 ```
 
 ## 🧪 Testing Best Practices

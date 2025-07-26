@@ -175,6 +175,12 @@ HttpHookResponse(
 )
 ```
 
+### 透传响应
+
+```dart
+HttpHookResponse.passThrough()  // 允许真实HTTP请求继续进行
+```
+
 ## 🕰 高级特性
 
 ### 模拟延迟
@@ -217,6 +223,49 @@ HttpHook.on(
     });
   },
 );
+```
+
+### 透传真实请求
+
+有时您可能希望有条件地模拟响应或允许真实的HTTP请求继续进行。使用 `HttpHookResponse.passThrough()` 让请求继续到真实服务器：
+
+```dart
+HttpHook.onRegex(
+  'http://api.example.com',
+  regex: RegExp(r'^/user/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final userId = match.regexMatch!.group(1);
+    
+    if (userId == 'real') {
+      // 让这个请求继续到真实服务器
+      return HttpHookResponse.passThrough();
+    } else if (userId == 'mock') {
+      // 返回模拟数据
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': '模拟用户',
+        'type': 'mock'
+      });
+    } else {
+      // 默认模拟响应
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': '默认用户',
+        'type': 'default'
+      });
+    }
+  },
+);
+
+// 这将进行真实的HTTP请求
+final realResponse = await http.get(Uri.parse('http://api.example.com/user/real'));
+
+// 这将返回模拟数据
+final mockResponse = await http.get(Uri.parse('http://api.example.com/user/mock'));
+
+// 这将返回默认模拟数据
+final defaultResponse = await http.get(Uri.parse('http://api.example.com/user/123'));
 ```
 
 ## 🧪 测试最佳实践
