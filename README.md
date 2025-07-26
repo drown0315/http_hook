@@ -78,7 +78,7 @@ Extract parameters from URL paths:
 
 ```dart
 HttpHook.onTemplate(
-  'http://api.example.com',  // Default URL with protocol and host
+  defaultUrl: 'http://api.example.com', 
   template: '/user/:id',
   method: HttpHookMethod.get,
   respond: (req, match) {
@@ -89,6 +89,20 @@ HttpHook.onTemplate(
     });
   },
 );
+
+// Match ANY host with the template
+HttpHook.onTemplate(
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final id = match.params!['id'];
+    return HttpHookResponse.json({
+      'id': id,
+      'name': 'User $id',
+      'host': req.url.host,  // Shows which host was matched
+    });
+  },
+);
 ```
 
 ### 3. Regular Expression Matching
@@ -96,8 +110,9 @@ HttpHook.onTemplate(
 Use regex for complex URL patterns:
 
 ```dart
+// Match specific host
 HttpHook.onRegex(
-  'http://api.example.com',
+  defaultUrl:'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
   method: HttpHookMethod.get,
   respond: (req, match) {
@@ -105,6 +120,20 @@ HttpHook.onRegex(
     return HttpHookResponse.json({
       'keyword': keyword,
       'results': ['Result 1', 'Result 2'],
+    });
+  },
+);
+
+// Match ANY host with the regex pattern (wildcard)
+HttpHook.onRegex(
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final endpoint = match.regexMatch!.group(1);
+    return HttpHookResponse.json({
+      'endpoint': endpoint,
+      'host': req.url.host,
+      'message': 'Universal API interceptor!',
     });
   },
 );
@@ -175,6 +204,12 @@ HttpHookResponse(
 )
 ```
 
+### Pass-Through Response
+
+```dart
+HttpHookResponse.passThrough()  // Allows real HTTP request to proceed
+```
+
 ## 🕰 Advanced Features
 
 ### Simulating Delays
@@ -219,6 +254,49 @@ HttpHook.on(
 );
 ```
 
+### Pass-Through for Real Requests
+
+Sometimes you may want to conditionally mock responses or allow real HTTP requests to proceed. Use `HttpHookResponse.passThrough()` to let the request continue to the real server:
+
+```dart
+HttpHook.onRegex(
+  defaultUrl: 'http://api.example.com',
+  regex: RegExp(r'^/user/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final userId = match.regexMatch!.group(1);
+    
+    if (userId == 'real') {
+      // Let this request go to the real server
+      return HttpHookResponse.passThrough();
+    } else if (userId == 'mock') {
+      // Return mock data
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': 'Mocked User',
+        'type': 'mock'
+      });
+    } else {
+      // Default mock response
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': 'Default User',
+        'type': 'default'
+      });
+    }
+  },
+);
+
+// This will make a real HTTP request
+final realResponse = await http.get(Uri.parse('http://api.example.com/user/real'));
+
+// This will return mock data
+final mockResponse = await http.get(Uri.parse('http://api.example.com/user/mock'));
+
+// This will return default mock data  
+final defaultResponse = await http.get(Uri.parse('http://api.example.com/user/123'));
+```
+
 ## 🧪 Testing Best Practices
 
 ### Test Structure
@@ -231,7 +309,7 @@ void main() {
 
     test('GET /user/:id', () async {
       HttpHook.onTemplate(
-        'http://api.example.com',
+        defaultUrl: 'http://api.example.com',
         template: '/user/:id',
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -308,16 +386,26 @@ class MatchResult {
 // Remove exact URL hook
 HttpHook.off('http://api.example.com/user/1');
 
-// Remove template hook
+// Remove template hook for specific host
 HttpHook.offTemplate(
-  'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   template: '/user/:id',
 );
 
-// Remove regex hook
+// Remove template hook for all hosts (wildcard)
+HttpHook.offTemplate(
+  template: '/user/:id',
+);
+
+// Remove regex hook for specific host
 HttpHook.offRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
+);
+
+// Remove regex hook for all hosts (wildcard)
+HttpHook.offRegex(
+  regex: RegExp(r'^/api/v1/(.+)$'),
 );
 
 // Remove all hooks
@@ -329,7 +417,7 @@ HttpHook.destroy();
 Add to your `pubspec.yaml`:
 
 ```yaml
-dependencies:
+dev_dependencies:
   http_hook: ^0.0.1
 ```
 

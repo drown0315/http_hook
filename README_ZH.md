@@ -77,8 +77,9 @@ HttpHook.on(
 从 URL 路径中提取参数：
 
 ```dart
+// 匹配特定URL
 HttpHook.onTemplate(
-  'http://api.example.com',  // 包含协议和主机的默认 URL
+  defaultUrl: 'http://api.example.com',  // 包含协议和主机的默认 URL
   template: '/user/:id',
   method: HttpHookMethod.get,
   respond: (req, match) {
@@ -89,6 +90,20 @@ HttpHook.onTemplate(
     });
   },
 );
+
+// 匹配任何主机的模板（通配符）
+HttpHook.onTemplate(
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final id = match.params!['id'];
+    return HttpHookResponse.json({
+      'id': id,
+      'name': 'User $id',
+      'host': req.url.host,  // 显示匹配到的主机
+    });
+  },
+);
 ```
 
 ### 3. 正则表达式匹配
@@ -96,8 +111,9 @@ HttpHook.onTemplate(
 使用正则表达式进行复杂的 URL 模式匹配：
 
 ```dart
+// 匹配特定主机
 HttpHook.onRegex(
-  'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
   method: HttpHookMethod.get,
   respond: (req, match) {
@@ -105,6 +121,20 @@ HttpHook.onRegex(
     return HttpHookResponse.json({
       'keyword': keyword,
       'results': ['结果 1', '结果 2'],
+    });
+  },
+);
+
+// 匹配任何主机的正则模式（通配符）
+HttpHook.onRegex(
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final endpoint = match.regexMatch!.group(1);
+    return HttpHookResponse.json({
+      'endpoint': endpoint,
+      'host': req.url.host,
+      'message': '通用 API 拦截器！',
     });
   },
 );
@@ -175,6 +205,12 @@ HttpHookResponse(
 )
 ```
 
+### 透传响应
+
+```dart
+HttpHookResponse.passThrough()  // 允许真实HTTP请求继续进行
+```
+
 ## 🕰 高级特性
 
 ### 模拟延迟
@@ -219,6 +255,49 @@ HttpHook.on(
 );
 ```
 
+### 透传真实请求
+
+有时您可能希望有条件地模拟响应或允许真实的HTTP请求继续进行。使用 `HttpHookResponse.passThrough()` 让请求继续到真实服务器：
+
+```dart
+HttpHook.onRegex(
+  'http://api.example.com',
+  regex: RegExp(r'^/user/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final userId = match.regexMatch!.group(1);
+    
+    if (userId == 'real') {
+      // 让这个请求继续到真实服务器
+      return HttpHookResponse.passThrough();
+    } else if (userId == 'mock') {
+      // 返回模拟数据
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': '模拟用户',
+        'type': 'mock'
+      });
+    } else {
+      // 默认模拟响应
+      return HttpHookResponse.json({
+        'id': userId,
+        'name': '默认用户',
+        'type': 'default'
+      });
+    }
+  },
+);
+
+// 这将进行真实的HTTP请求
+final realResponse = await http.get(Uri.parse('http://api.example.com/user/real'));
+
+// 这将返回模拟数据
+final mockResponse = await http.get(Uri.parse('http://api.example.com/user/mock'));
+
+// 这将返回默认模拟数据
+final defaultResponse = await http.get(Uri.parse('http://api.example.com/user/123'));
+```
+
 ## 🧪 测试最佳实践
 
 ### 测试结构
@@ -231,7 +310,7 @@ void main() {
 
     test('GET /user/:id', () async {
       HttpHook.onTemplate(
-        'http://api.example.com',
+        defaultUrl: 'http://api.example.com',
         template: '/user/:id',
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -308,16 +387,26 @@ class MatchResult {
 // 移除精确 URL hook
 HttpHook.off('http://api.example.com/user/1');
 
-// 移除模板 hook
+// 移除特定主机的模板 hook
 HttpHook.offTemplate(
   'http://api.example.com',
   template: '/user/:id',
 );
 
-// 移除正则 hook
+// 移除所有主机的模板 hook（通配符）
+HttpHook.offTemplate(
+  template: '/user/:id',
+);
+
+// 移除特定主机的正则 hook
 HttpHook.offRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
+);
+
+// 移除所有主机的正则 hook（通配符）
+HttpHook.offRegex(
+  regex: RegExp(r'^/api/v1/(.+)$'),
 );
 
 // 移除所有 hook
@@ -329,7 +418,7 @@ HttpHook.destroy();
 添加到你的 `pubspec.yaml`：
 
 ```yaml
-dependencies:
+dev_dependencies:
   http_hook: ^0.0.1
 ```
 

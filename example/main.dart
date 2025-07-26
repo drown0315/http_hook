@@ -27,7 +27,7 @@ Future<void> main() async {
   // Example 2: Path template matching
   print('2. Path template matching');
   HttpHook.onTemplate(
-    'http://httpbin.org',
+    defaultUrl: 'http://httpbin.org',
     template: '/user/:id',
     method: HttpHookMethod.get,
     respond: (req, match) {
@@ -46,7 +46,7 @@ Future<void> main() async {
   // Example 3: Regular expression matching
   print('3. Regular expression matching');
   HttpHook.onRegex(
-    'http://httpbin.org',
+    defaultUrl: 'http://httpbin.org',
     regex: RegExp(r'^/search/(.+)$'),
     method: HttpHookMethod.get,
     respond: (req, match) {
@@ -162,6 +162,52 @@ Future<void> main() async {
   final deleteResponse =
       await http.delete(Uri.parse('http://api.example.com/user/1'));
   print('DELETE Response: ${deleteResponse.body}\n');
+
+  // Example 8: Pass-through for real requests
+  print('8. Pass-through example (mock vs real)');
+  HttpHook.onRegex(
+    defaultUrl: 'http://httpbin.org',
+    regex: RegExp(r'^/get/(.+)$'),
+    method: HttpHookMethod.get,
+    respond: (req, match) {
+      final param = match.regexMatch!.group(1);
+      if (param == 'mock') {
+        // Return mock data
+        return HttpHookResponse.json({
+          'type': 'mock',
+          'message': 'This is mocked data',
+          'param': param,
+        });
+      } else if (param == 'real') {
+        // Let it make a real HTTP request
+        return HttpHookResponse.passThrough();
+      } else {
+        // Default mock response
+        return HttpHookResponse.json({
+          'type': 'default_mock',
+          'param': param,
+        });
+      }
+    },
+  );
+
+  // This will return mock data
+  final mockResponse = await http.get(Uri.parse('http://httpbin.org/get/mock'));
+  print('Mock response: ${mockResponse.body}');
+
+  // This will make a real request (will likely fail since httpbin.org/get/real doesn't exist)
+  try {
+    final realResponse =
+        await http.get(Uri.parse('http://httpbin.org/get/real'));
+    print('Real response: ${realResponse.body}');
+  } catch (e) {
+    print('Real request failed as expected: $e');
+  }
+
+  // This will return default mock
+  final defaultResponse =
+      await http.get(Uri.parse('http://httpbin.org/get/other'));
+  print('Default mock response: ${defaultResponse.body}\n');
 
   // Cleanup and stop Hook
   print('Cleaning up HTTP Hook');

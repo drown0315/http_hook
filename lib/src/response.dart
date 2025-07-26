@@ -11,7 +11,15 @@ class HttpHookResponse {
     this.headers = const {},
     this.body = '',
     this.reasonPhrase,
+    this.isPassThrough = false,
   });
+
+  const HttpHookResponse._passThrough()
+      : statusCode = 0,
+        headers = const {},
+        body = '',
+        reasonPhrase = null,
+        isPassThrough = true;
 
   /// The HTTP status code to return (e.g. 200, 404, 500).
   final int statusCode;
@@ -33,6 +41,34 @@ class HttpHookResponse {
   ///
   /// For example: `"OK"`, `"Not Found"`, `"Internal Server Error"`.
   final String? reasonPhrase;
+
+  /// Whether this response should pass through to make a real HTTP request.
+  ///
+  /// When true, the HttpHook will not intercept this request and will
+  /// allow it to proceed to make a real network call.
+  final bool isPassThrough;
+
+  /// Creates a pass-through response that allows the request to proceed
+  /// to make a real HTTP call instead of being mocked.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHook.onRegex(
+  ///   'http://api.example.com',
+  ///   regex: RegExp(r'^/user/(.+)$'),
+  ///   method: HttpHookMethod.get,
+  ///   respond: (req, match) {
+  ///     final userId = match.regexMatch!.group(1);
+  ///     if (userId == 'real') {
+  ///       return HttpHookResponse.passThrough(); // Make real request
+  ///     }
+  ///     return HttpHookResponse.json({'mock': 'data'});
+  ///   },
+  /// );
+  /// ```
+  factory HttpHookResponse.passThrough() {
+    return const HttpHookResponse._passThrough();
+  }
 
   /// Creates a simple 200 OK response.
   ///
