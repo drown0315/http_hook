@@ -77,6 +77,7 @@ HttpHook.on(
 Extract parameters from URL paths:
 
 ```dart
+// Match specific host
 HttpHook.onTemplate(
   'http://api.example.com',  // Default URL with protocol and host
   template: '/user/:id',
@@ -89,6 +90,21 @@ HttpHook.onTemplate(
     });
   },
 );
+
+// Match ANY host with the template (wildcard)
+HttpHook.onTemplate(
+  null,  // No defaultUrl - matches any host
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final id = match.params!['id'];
+    return HttpHookResponse.json({
+      'id': id,
+      'name': 'User $id',
+      'host': req.url.host,  // Shows which host was matched
+    });
+  },
+);
 ```
 
 ### 3. Regular Expression Matching
@@ -96,6 +112,7 @@ HttpHook.onTemplate(
 Use regex for complex URL patterns:
 
 ```dart
+// Match specific host
 HttpHook.onRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
@@ -108,9 +125,63 @@ HttpHook.onRegex(
     });
   },
 );
+
+// Match ANY host with the regex pattern (wildcard)
+HttpHook.onRegex(
+  null,  // No defaultUrl - matches any host
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final endpoint = match.regexMatch!.group(1);
+    return HttpHookResponse.json({
+      'endpoint': endpoint,
+      'host': req.url.host,
+      'message': 'Universal API interceptor!',
+    });
+  },
+);
 ```
 
-### 4. HTTP Methods
+### 4. Wildcard Host Matching
+
+When you don't specify a `defaultUrl` (pass `null`), the hook will match **any host** with the given template or regex pattern. This is useful for:
+
+- **Universal API interceptors**: Intercept the same endpoint across multiple services
+- **Development environments**: Mock APIs regardless of the host being used
+- **Testing**: Create flexible test scenarios that work with any domain
+
+```dart
+// This will intercept /user/:id on ANY host:
+// - http://api.example.com/user/123
+// - http://localhost:8080/user/456  
+// - http://test.domain.org/user/789
+HttpHook.onTemplate(
+  null,  // Wildcard - matches any host
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    return HttpHookResponse.json({
+      'user_id': match.params!['id'],
+      'intercepted_host': req.url.host,
+    });
+  },
+);
+
+// This will intercept /api/v1/* on ANY host
+HttpHook.onRegex(
+  null,  // Wildcard - matches any host
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    return HttpHookResponse.json({
+      'endpoint': match.regexMatch!.group(1),
+      'service_host': req.url.host,
+    });
+  },
+);
+```
+
+### 5. HTTP Methods
 
 Support for all HTTP methods:
 
@@ -357,16 +428,28 @@ class MatchResult {
 // Remove exact URL hook
 HttpHook.off('http://api.example.com/user/1');
 
-// Remove template hook
+// Remove template hook for specific host
 HttpHook.offTemplate(
   'http://api.example.com',
   template: '/user/:id',
 );
 
-// Remove regex hook
+// Remove template hook for all hosts (wildcard)
+HttpHook.offTemplate(
+  null,  // Remove wildcard rule
+  template: '/user/:id',
+);
+
+// Remove regex hook for specific host
 HttpHook.offRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
+);
+
+// Remove regex hook for all hosts (wildcard)
+HttpHook.offRegex(
+  null,  // Remove wildcard rule
+  regex: RegExp(r'^/api/v1/(.+)$'),
 );
 
 // Remove all hooks

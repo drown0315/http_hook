@@ -77,6 +77,7 @@ HttpHook.on(
 从 URL 路径中提取参数：
 
 ```dart
+// 匹配特定主机
 HttpHook.onTemplate(
   'http://api.example.com',  // 包含协议和主机的默认 URL
   template: '/user/:id',
@@ -89,6 +90,21 @@ HttpHook.onTemplate(
     });
   },
 );
+
+// 匹配任何主机的模板（通配符）
+HttpHook.onTemplate(
+  null,  // 不指定 defaultUrl - 匹配任何主机
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final id = match.params!['id'];
+    return HttpHookResponse.json({
+      'id': id,
+      'name': 'User $id',
+      'host': req.url.host,  // 显示匹配到的主机
+    });
+  },
+);
 ```
 
 ### 3. 正则表达式匹配
@@ -96,6 +112,7 @@ HttpHook.onTemplate(
 使用正则表达式进行复杂的 URL 模式匹配：
 
 ```dart
+// 匹配特定主机
 HttpHook.onRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
@@ -108,9 +125,63 @@ HttpHook.onRegex(
     });
   },
 );
+
+// 匹配任何主机的正则模式（通配符）
+HttpHook.onRegex(
+  null,  // 不指定 defaultUrl - 匹配任何主机
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    final endpoint = match.regexMatch!.group(1);
+    return HttpHookResponse.json({
+      'endpoint': endpoint,
+      'host': req.url.host,
+      'message': '通用 API 拦截器！',
+    });
+  },
+);
 ```
 
-### 4. HTTP 方法
+### 4. 通配符主机匹配
+
+当您不指定 `defaultUrl`（传递 `null`）时，hook 将匹配**任何主机**的指定模板或正则表达式模式。这对以下场景很有用：
+
+- **通用 API 拦截器**: 拦截多个服务中的相同端点
+- **开发环境**: 无论使用何种主机都能模拟 API
+- **测试**: 创建适用于任何域名的灵活测试场景
+
+```dart
+// 这将拦截任何主机上的 /user/:id：
+// - http://api.example.com/user/123
+// - http://localhost:8080/user/456  
+// - http://test.domain.org/user/789
+HttpHook.onTemplate(
+  null,  // 通配符 - 匹配任何主机
+  template: '/user/:id',
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    return HttpHookResponse.json({
+      'user_id': match.params!['id'],
+      'intercepted_host': req.url.host,
+    });
+  },
+);
+
+// 这将拦截任何主机上的 /api/v1/*
+HttpHook.onRegex(
+  null,  // 通配符 - 匹配任何主机
+  regex: RegExp(r'^/api/v1/(.+)$'),
+  method: HttpHookMethod.get,
+  respond: (req, match) {
+    return HttpHookResponse.json({
+      'endpoint': match.regexMatch!.group(1),
+      'service_host': req.url.host,
+    });
+  },
+);
+```
+
+### 5. HTTP 方法
 
 支持所有 HTTP 方法：
 
@@ -357,16 +428,28 @@ class MatchResult {
 // 移除精确 URL hook
 HttpHook.off('http://api.example.com/user/1');
 
-// 移除模板 hook
+// 移除特定主机的模板 hook
 HttpHook.offTemplate(
   'http://api.example.com',
   template: '/user/:id',
 );
 
-// 移除正则 hook
+// 移除所有主机的模板 hook（通配符）
+HttpHook.offTemplate(
+  null,  // 移除通配符规则
+  template: '/user/:id',
+);
+
+// 移除特定主机的正则 hook
 HttpHook.offRegex(
   'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
+);
+
+// 移除所有主机的正则 hook（通配符）
+HttpHook.offRegex(
+  null,  // 移除通配符规则
+  regex: RegExp(r'^/api/v1/(.+)$'),
 );
 
 // 移除所有 hook
