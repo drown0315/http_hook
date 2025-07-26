@@ -109,20 +109,31 @@ class HttpHook {
   /// Registers a hook rule using a path template with named parameters.
   ///
   /// [template] is the path template, e.g. `/users/:id`.
-  /// [defaultUrl] must be specified to match requests to a particular host.
+  /// [defaultUrl] can be specified to restrict matches to a specific host.
+  /// If null, matches any host with the given template.
   ///
   /// [method] optionally restricts by HTTP method.
   ///
   /// [respond] handles matching requests.）
   static void onTemplate(
-    String defaultUrl, {
+    String? defaultUrl, {
     required String template,
     required HttpHookMethod method,
     required HttpHookHandler respond,
   }) {
-    final uri = Uri.parse(defaultUrl);
-    final host = uri.host;
-    _rules['$host$template'] = _HttpHookRule(
+    final String host;
+    final String ruleKey;
+    
+    if (defaultUrl != null) {
+      final uri = Uri.parse(defaultUrl);
+      host = uri.host;
+      ruleKey = '$host$template';
+    } else {
+      host = '*'; // Wildcard for any host
+      ruleKey = '*$template';
+    }
+    
+    _rules[ruleKey] = _HttpHookRule(
       pattern: '$host$template',
       method: method,
       handler: respond,
@@ -133,20 +144,31 @@ class HttpHook {
   /// Registers a hook rule with a regular expression to match URL paths.
   ///
   /// [regex] defines the pattern to match against the request path.
-  /// [defaultUrl] must be specified to restrict matches to a specific host.
+  /// [defaultUrl] can be specified to restrict matches to a specific host.
+  /// If null, matches any host with the given regex pattern.
   ///
   /// [method] optionally restricts by HTTP method.
   ///
   /// [respond] handles matching requests.
   static void onRegex(
-    String defaultUrl, {
+    String? defaultUrl, {
     required RegExp regex,
     required HttpHookMethod method,
     required HttpHookHandler respond,
   }) {
-    final uri = Uri.parse(defaultUrl);
-    final host = uri.host;
-    _rules['$host|||${regex.pattern}'] = _HttpHookRule(
+    final String host;
+    final String ruleKey;
+    
+    if (defaultUrl != null) {
+      final uri = Uri.parse(defaultUrl);
+      host = uri.host;
+      ruleKey = '$host|||${regex.pattern}';
+    } else {
+      host = '*'; // Wildcard for any host
+      ruleKey = '*|||${regex.pattern}';
+    }
+    
+    _rules[ruleKey] = _HttpHookRule(
       pattern: '$host|||${regex.pattern}',
       method: method,
       handler: respond,
@@ -160,24 +182,41 @@ class HttpHook {
   }
 
   /// Removes path template hook rules for the given [template] and [defaultUrl].
+  /// If [defaultUrl] is null, removes template rules for all hosts.
   static void offTemplate(
-    String defaultUrl, {
+    String? defaultUrl, {
     required String template,
   }) {
-    final uri = Uri.parse(defaultUrl);
-    final host = uri.host;
-    _rules.removeWhere((key, value) => key.startsWith('$host$template'));
+    final String ruleKey;
+    
+    if (defaultUrl != null) {
+      final uri = Uri.parse(defaultUrl);
+      final host = uri.host;
+      ruleKey = '$host$template';
+    } else {
+      ruleKey = '*$template';
+    }
+    
+    _rules.remove(ruleKey);
   }
 
   /// Removes regex hook rules matching the given [regex] pattern and [defaultUrl].
+  /// If [defaultUrl] is null, removes regex rules for all hosts.
   static void offRegex(
-    String defaultUrl, {
+    String? defaultUrl, {
     required RegExp regex,
   }) {
-    final uri = Uri.parse(defaultUrl);
-    final host = uri.host;
-    _rules.removeWhere(
-        (key, value) => key.startsWith('$host|||${regex.pattern}'));
+    final String ruleKey;
+    
+    if (defaultUrl != null) {
+      final uri = Uri.parse(defaultUrl);
+      final host = uri.host;
+      ruleKey = '$host|||${regex.pattern}';
+    } else {
+      ruleKey = '*|||${regex.pattern}';
+    }
+    
+    _rules.remove(ruleKey);
   }
 
   // Internal method to match the incoming request against all registered hook rules.
@@ -260,7 +299,8 @@ class HttpHook {
     final expectedHost = pattern.substring(0, hostEndIndex);
     final template = pattern.substring(hostEndIndex);
 
-    if (url.host != expectedHost) {
+    // Skip host check if wildcard is used
+    if (expectedHost != '*' && url.host != expectedHost) {
       return null;
     }
 
@@ -301,7 +341,9 @@ class HttpHook {
 
     final expectedHost = pattern.substring(0, separatorIndex);
     final regexPattern = pattern.substring(separatorIndex + 3);
-    if (url.host != expectedHost) {
+    
+    // Skip host check if wildcard is used
+    if (expectedHost != '*' && url.host != expectedHost) {
       return null;
     }
 
