@@ -232,15 +232,15 @@ void main() {
       expect(wildcardData['type'], 'wildcard');
 
       /// Act & Assert - Host-specific rule should work for specific host
-      final specificResponse = await http
-          .get(Uri.parse('http://microsoft.com/specific-only/456'));
+      final specificResponse =
+          await http.get(Uri.parse('http://microsoft.com/specific-only/456'));
       final specificData = jsonDecode(specificResponse.body);
       expect(specificData['type'], 'specific');
 
       /// Act & Assert - Non-matching host for specific rule should fail (network error expected)
       try {
-        final nonMatchResponse = await http
-            .get(Uri.parse('http://amazon.com/specific-only/789'));
+        final nonMatchResponse =
+            await http.get(Uri.parse('http://amazon.com/specific-only/789'));
         // If we get here, it means the request went through without interception
         expect(nonMatchResponse.statusCode, isNot(200));
       } catch (e) {
