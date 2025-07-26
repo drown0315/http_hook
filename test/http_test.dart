@@ -191,9 +191,9 @@ void main() {
 
       /// Act & Assert - Test with different hosts
       final hosts = [
-        'http://api.example.com/wildcard/user/123',
-        'http://test.domain.org/wildcard/user/456',
-        'http://another.test.com/wildcard/user/789'
+        'http://google.com/wildcard/user/123',
+        'http://github.com/wildcard/user/456',
+        'http://stackoverflow.com/wildcard/user/789'
       ];
 
       for (final url in hosts) {
@@ -219,7 +219,7 @@ void main() {
 
       // Add host-specific rule for different template
       HttpHook.onTemplate(
-        defaultUrl: 'http://specific.example.com',
+        defaultUrl: 'http://microsoft.com',
         template: '/specific-only/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.json({'type': 'specific'}),
@@ -227,20 +227,20 @@ void main() {
 
       /// Act & Assert - Wildcard rule should work for any host
       final wildcardResponse =
-          await http.get(Uri.parse('http://any.example.com/wildcard-only/123'));
+          await http.get(Uri.parse('http://apple.com/wildcard-only/123'));
       final wildcardData = jsonDecode(wildcardResponse.body);
       expect(wildcardData['type'], 'wildcard');
 
       /// Act & Assert - Host-specific rule should work for specific host
       final specificResponse = await http
-          .get(Uri.parse('http://specific.example.com/specific-only/456'));
+          .get(Uri.parse('http://microsoft.com/specific-only/456'));
       final specificData = jsonDecode(specificResponse.body);
       expect(specificData['type'], 'specific');
 
       /// Act & Assert - Non-matching host for specific rule should fail (network error expected)
       try {
         final nonMatchResponse = await http
-            .get(Uri.parse('http://other.example.com/specific-only/789'));
+            .get(Uri.parse('http://amazon.com/specific-only/789'));
         // If we get here, it means the request went through without interception
         expect(nonMatchResponse.statusCode, isNot(200));
       } catch (e) {
@@ -249,7 +249,7 @@ void main() {
       }
     });
 
-              test('offTemplate without defaultUrl should remove wildcard rules',
+    test('offTemplate without defaultUrl should remove wildcard rules',
         () async {
       /// Arrange.
       HttpHook.onTemplate(
@@ -417,9 +417,9 @@ void main() {
 
       /// Act & Assert - Test with different hosts
       final urls = [
-        'http://service1.com/api/v1/users',
-        'http://backend.app.io/api/v1/posts',
-        'http://api.test.local/api/v1/auth'
+        'http://google.com/api/v1/users',
+        'http://github.com/api/v1/posts',
+        'http://stackoverflow.com/api/v1/auth'
       ];
 
       for (final url in urls) {
@@ -433,8 +433,7 @@ void main() {
       }
     });
 
-              test('offRegex without defaultUrl should remove wildcard rules',
-        () async {
+    test('offRegex without defaultUrl should remove wildcard rules', () async {
       /// Arrange.
       final regex = RegExp(r'^/remove/regex/(.+)$');
       HttpHook.onRegex(
