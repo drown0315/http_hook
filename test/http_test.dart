@@ -113,7 +113,7 @@ void main() {
     test('override a get method', () async {
       /// Arrange.
       HttpHook.onTemplate(
-        _defaultUrl,
+        defaultUrl: _defaultUrl,
         template: '/on_template/user/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('hi'),
@@ -132,14 +132,15 @@ void main() {
         () async {
       /// Arrange.
       HttpHook.onTemplate(
-        _defaultUrl,
+        defaultUrl: _defaultUrl,
         template: '/on_template/user/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('hi'),
       );
 
       /// Act.
-      HttpHook.offTemplate(_defaultUrl, template: '/on_template/user/:id');
+      HttpHook.offTemplate(
+          defaultUrl: _defaultUrl, template: '/on_template/user/:id');
       final response =
           await http.get(Uri.parse('$_defaultUrl/on_template/user/1'));
 
@@ -150,7 +151,7 @@ void main() {
     test('template with conditional passThrough', () async {
       /// Arrange.
       HttpHook.onTemplate(
-        'http://httpbin.org',
+        defaultUrl: 'http://httpbin.org',
         template: '/get/:action',
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -176,10 +177,9 @@ void main() {
       expect(realResponse.statusCode, isNot(200)); // Not a mock response
     });
 
-    test('onTemplate with null defaultUrl should match any host', () async {
+    test('onTemplate without defaultUrl should match any host', () async {
       /// Arrange.
       HttpHook.onTemplate(
-        null, // Wildcard - matches any host
         template: '/wildcard/user/:id',
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -212,7 +212,6 @@ void main() {
       /// Arrange.
       // Add wildcard rule for one template
       HttpHook.onTemplate(
-        null,
         template: '/wildcard-only/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.json({'type': 'wildcard'}),
@@ -220,7 +219,7 @@ void main() {
 
       // Add host-specific rule for different template
       HttpHook.onTemplate(
-        'http://specific.example.com',
+        defaultUrl: 'http://specific.example.com',
         template: '/specific-only/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.json({'type': 'specific'}),
@@ -250,11 +249,10 @@ void main() {
       }
     });
 
-    test('offTemplate with null defaultUrl should remove rules correctly',
+              test('offTemplate without defaultUrl should remove wildcard rules',
         () async {
       /// Arrange.
       HttpHook.onTemplate(
-        null,
         template: '/remove/wildcard/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('wildcard'),
@@ -266,7 +264,7 @@ void main() {
       expect(response1.body, 'wildcard');
 
       /// Act.
-      HttpHook.offTemplate(null, template: '/remove/wildcard/:id');
+      HttpHook.offTemplate(template: '/remove/wildcard/:id');
 
       /// Assert.
       final response2 =
@@ -278,7 +276,6 @@ void main() {
       /// Arrange.
       // Add wildcard rule for one template
       HttpHook.onTemplate(
-        null,
         template: '/wildcard-remove/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('wildcard'),
@@ -286,7 +283,7 @@ void main() {
 
       // Add host-specific rule for same template
       HttpHook.onTemplate(
-        'http://specific.com',
+        defaultUrl: 'http://specific.com',
         template: '/specific-remove/:id',
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('specific'),
@@ -302,7 +299,7 @@ void main() {
       expect(specificInitial.body, 'specific');
 
       /// Act - Remove only wildcard rule
-      HttpHook.offTemplate(null, template: '/wildcard-remove/:id');
+      HttpHook.offTemplate(template: '/wildcard-remove/:id');
 
       /// Assert - Wildcard should be removed, specific should remain
       try {
@@ -333,12 +330,14 @@ void main() {
 
     test('override a get method', () async {
       /// Arrange.
-      HttpHook.onRegex(_defaultUrl,
+      HttpHook.onRegex(
+          defaultUrl: _defaultUrl,
           regex: RegExp(r'^/search/(.+)$'),
-          method: HttpHookMethod.get, respond: (req, match) {
-        final keyword = match.regexMatch!.group(1);
-        return HttpHookResponse.json({'keyword': keyword, 'results': []});
-      });
+          method: HttpHookMethod.get,
+          respond: (req, match) {
+            final keyword = match.regexMatch!.group(1);
+            return HttpHookResponse.json({'keyword': keyword, 'results': []});
+          });
 
       /// Act.
       final response = await http.get(Uri.parse('$_defaultUrl/search/flutter'));
@@ -353,14 +352,15 @@ void main() {
     test('remove the override request, http request should not be intercepted',
         () async {
       /// Arrange.
-      HttpHook.onRegex(_defaultUrl,
+      HttpHook.onRegex(
+          defaultUrl: _defaultUrl,
           regex: RegExp(r'/on_regex/user/(\d+)'),
           method: HttpHookMethod.get,
           respond: (req, match) => HttpHookResponse.ok('hi'));
 
       /// Act.
       HttpHook.offRegex(
-        _defaultUrl,
+        defaultUrl: _defaultUrl,
         regex: RegExp(r'/on_regex/user/(\d+)'),
       );
       final response =
@@ -373,7 +373,7 @@ void main() {
     test('conditional passThrough with regex', () async {
       /// Arrange.
       HttpHook.onRegex(
-        'http://httpbin.org',
+        defaultUrl: 'http://httpbin.org',
         regex: RegExp(r'^/status/(.+)$'),
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -399,10 +399,10 @@ void main() {
       expect(realResponse.statusCode, 200); // Real httpbin.org response
     });
 
-    test('onRegex with null defaultUrl should match any host', () async {
+    test('onRegex without defaultUrl should match any host', () async {
       /// Arrange.
       HttpHook.onRegex(
-        null, // Wildcard - matches any host
+        // Wildcard - matches any host
         regex: RegExp(r'^/api/v1/(.+)$'),
         method: HttpHookMethod.get,
         respond: (req, match) {
@@ -433,12 +433,11 @@ void main() {
       }
     });
 
-    test('offRegex with null defaultUrl should remove wildcard rules',
+              test('offRegex without defaultUrl should remove wildcard rules',
         () async {
       /// Arrange.
       final regex = RegExp(r'^/remove/regex/(.+)$');
       HttpHook.onRegex(
-        null,
         regex: regex,
         method: HttpHookMethod.get,
         respond: (req, match) => HttpHookResponse.ok('wildcard_regex'),
@@ -450,7 +449,7 @@ void main() {
       expect(response1.body, 'wildcard_regex');
 
       /// Act.
-      HttpHook.offRegex(null, regex: regex);
+      HttpHook.offRegex(regex: regex);
 
       /// Assert.
       final response2 =

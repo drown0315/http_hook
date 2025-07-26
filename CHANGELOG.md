@@ -4,11 +4,10 @@
 
 ### Features
 * **Pass-through functionality**: Added `HttpHookResponse.passThrough()` for conditional real HTTP requests
-* **Wildcard host matching**: Support null `defaultUrl` in `onTemplate` and `onRegex` to match any host  
-* **Enhanced API**: Made `method` parameter required across all hook methods for better type safety
+* **Wildcard host matching**: `onTemplate` and `onRegex` without `defaultUrl` parameter match any host  
 
 ### Breaking Changes
-* `defaultUrl` parameter in `onTemplate`/`onRegex` is now nullable for wildcard support
+* `defaultUrl` parameter in `onTemplate`/`onRegex` is now optional with default empty string for wildcard support
 
 ## [0.0.1]
 

@@ -27,7 +27,7 @@ Future<void> main() async {
   // Example 2: Path template matching
   print('2. Path template matching');
   HttpHook.onTemplate(
-    'http://httpbin.org',
+    defaultUrl: 'http://httpbin.org',
     template: '/user/:id',
     method: HttpHookMethod.get,
     respond: (req, match) {
@@ -46,7 +46,7 @@ Future<void> main() async {
   // Example 3: Regular expression matching
   print('3. Regular expression matching');
   HttpHook.onRegex(
-    'http://httpbin.org',
+    defaultUrl: 'http://httpbin.org',
     regex: RegExp(r'^/search/(.+)$'),
     method: HttpHookMethod.get,
     respond: (req, match) {
@@ -166,7 +166,7 @@ Future<void> main() async {
   // Example 8: Pass-through for real requests
   print('8. Pass-through example (mock vs real)');
   HttpHook.onRegex(
-    'http://httpbin.org',
+    defaultUrl: 'http://httpbin.org',
     regex: RegExp(r'^/get/(.+)$'),
     method: HttpHookMethod.get,
     respond: (req, match) {

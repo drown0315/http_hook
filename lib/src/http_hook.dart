@@ -110,13 +110,13 @@ class HttpHook {
   ///
   /// [template] is the path template, e.g. `/users/:id`.
   /// [defaultUrl] can be specified to restrict matches to a specific host.
-  /// If null, matches any host with the given template.
+  /// If is empty, matches any host with the given template.
   ///
   /// [method] optionally restricts by HTTP method.
   ///
   /// [respond] handles matching requests.）
-  static void onTemplate(
-    String? defaultUrl, {
+  static void onTemplate({
+    String defaultUrl = '',
     required String template,
     required HttpHookMethod method,
     required HttpHookHandler respond,
@@ -124,7 +124,7 @@ class HttpHook {
     final String host;
     final String ruleKey;
 
-    if (defaultUrl != null) {
+    if (defaultUrl.isNotEmpty) {
       final uri = Uri.parse(defaultUrl);
       host = uri.host;
       ruleKey = '$host$template';
@@ -145,13 +145,13 @@ class HttpHook {
   ///
   /// [regex] defines the pattern to match against the request path.
   /// [defaultUrl] can be specified to restrict matches to a specific host.
-  /// If null, matches any host with the given regex pattern.
+  /// If is empty, matches any host with the given regex pattern.
   ///
   /// [method] optionally restricts by HTTP method.
   ///
   /// [respond] handles matching requests.
-  static void onRegex(
-    String? defaultUrl, {
+  static void onRegex({
+    String defaultUrl = '',
     required RegExp regex,
     required HttpHookMethod method,
     required HttpHookHandler respond,
@@ -159,7 +159,7 @@ class HttpHook {
     final String host;
     final String ruleKey;
 
-    if (defaultUrl != null) {
+    if (defaultUrl.isNotEmpty) {
       final uri = Uri.parse(defaultUrl);
       host = uri.host;
       ruleKey = '$host|||${regex.pattern}';
@@ -182,14 +182,14 @@ class HttpHook {
   }
 
   /// Removes path template hook rules for the given [template] and [defaultUrl].
-  /// If [defaultUrl] is null, removes template rules for all hosts.
-  static void offTemplate(
-    String? defaultUrl, {
+  /// If [defaultUrl] is empty, removes template rules for all hosts.
+  static void offTemplate({
+    String defaultUrl = '',
     required String template,
   }) {
     final String ruleKey;
 
-    if (defaultUrl != null) {
+    if (defaultUrl.isNotEmpty) {
       final uri = Uri.parse(defaultUrl);
       final host = uri.host;
       ruleKey = '$host$template';
@@ -201,14 +201,14 @@ class HttpHook {
   }
 
   /// Removes regex hook rules matching the given [regex] pattern and [defaultUrl].
-  /// If [defaultUrl] is null, removes regex rules for all hosts.
-  static void offRegex(
-    String? defaultUrl, {
+  /// If [defaultUrl] is empty, removes regex rules for all hosts.
+  static void offRegex({
+    String defaultUrl = '',
     required RegExp regex,
   }) {
     final String ruleKey;
 
-    if (defaultUrl != null) {
+    if (defaultUrl.isNotEmpty) {
       final uri = Uri.parse(defaultUrl);
       final host = uri.host;
       ruleKey = '$host|||${regex.pattern}';
