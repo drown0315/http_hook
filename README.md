@@ -4,7 +4,7 @@
 
 A lightweight and flexible Dart HTTP request interception and mocking library for testing and debugging. Supports precise URL matching, path template matching, regex matching, and dynamic response generation.
 
-> **⚠️ Important Notice**: The current version only supports HTTP protocol. HTTPS is not supported yet.
+
 
 ## ✨ Features
 
@@ -112,7 +112,7 @@ Use regex for complex URL patterns:
 ```dart
 // Match specific host
 HttpHook.onRegex(
-  defaultUrl:'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
   method: HttpHookMethod.get,
   respond: (req, match) {
@@ -342,7 +342,6 @@ test('simple API call', () async {
 
 ## ⚠️ Known Limitations
 
-- **HTTPS Not Supported**: The current version only supports HTTP protocol. HTTPS interception is not available.
 - **Request Body Access**: The `HttpHookRequest` object does not include request body data.
 
 ## 📖 API Reference
@@ -399,7 +398,7 @@ HttpHook.offTemplate(
 
 // Remove regex hook for specific host
 HttpHook.offRegex(
-  'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
 );
 
@@ -418,12 +417,12 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  http_hook: ^0.0.1
+  http_hook: ^0.0.3
 ```
 
 ## 💡 Use Cases
 
-- **Unit & Integration Testing**: Mock external APIs without running servers (HTTP only)
+- **Unit & Integration Testing**: Mock external APIs without running servers (HTTP & HTTPS)
 - **Development & Debugging**: Test different API responses and error conditions
 - **Network Simulation**: Simulate slow connections, timeouts, and failures
 - **API Prototyping**: Create mock responses before backend implementation

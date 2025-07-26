@@ -4,7 +4,6 @@
 
 一个轻量、灵活的 Dart HTTP 请求拦截与模拟库，适用于测试和调试。支持精准 URL 匹配、路径模板匹配、正则匹配和动态响应生成。
 
-> **⚠️ 重要提示**: 当前版本仅支持 HTTP 协议，暂不支持 HTTPS。
 
 ## ✨ 特性
 
@@ -343,7 +342,6 @@ test('简单 API 调用', () async {
 
 ## ⚠️ 已知限制
 
-- **不支持 HTTPS**: 当前版本仅支持 HTTP 协议，不支持 HTTPS 拦截。
 - **请求体访问限制**: `HttpHookRequest` 对象不包含请求体数据。
 
 ## 📖 API 参考
@@ -389,7 +387,7 @@ HttpHook.off('http://api.example.com/user/1');
 
 // 移除特定主机的模板 hook
 HttpHook.offTemplate(
-  'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   template: '/user/:id',
 );
 
@@ -400,7 +398,7 @@ HttpHook.offTemplate(
 
 // 移除特定主机的正则 hook
 HttpHook.offRegex(
-  'http://api.example.com',
+  defaultUrl: 'http://api.example.com',
   regex: RegExp(r'^/search/(.+)$'),
 );
 
@@ -419,12 +417,12 @@ HttpHook.destroy();
 
 ```yaml
 dev_dependencies:
-  http_hook: ^0.0.1
+  http_hook: ^0.0.3
 ```
 
 ## 💡 使用场景
 
-- **单元测试和集成测试**: 无需运行服务器即可模拟外部 API（仅限 HTTP）
+- **单元测试和集成测试**: 无需运行服务器即可模拟外部 API（HTTP 和 HTTPS）
 - **开发和调试**: 测试不同的 API 响应和错误条件
 - **网络模拟**: 模拟慢连接、超时和失败
 - **API 原型设计**: 在后端实现之前创建模拟响应

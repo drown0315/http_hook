@@ -112,7 +112,8 @@ class HttpHook {
   /// [defaultUrl] can be specified to restrict matches to a specific host.
   /// If is empty, matches any host with the given template.
   ///
-  /// [method] optionally restricts by HTTP method.
+  /// [method], only requests with the matching HTTP method
+  /// will be intercepted.
   ///
   /// [respond] handles matching requests.）
   static void onTemplate({
@@ -147,7 +148,8 @@ class HttpHook {
   /// [defaultUrl] can be specified to restrict matches to a specific host.
   /// If is empty, matches any host with the given regex pattern.
   ///
-  /// [method] optionally restricts by HTTP method.
+  /// [method], only requests with the matching HTTP method
+  /// will be intercepted.
   ///
   /// [respond] handles matching requests.
   static void onRegex({

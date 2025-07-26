@@ -1,6 +1,6 @@
 name: http_hook
 description: Lightweight Dart HTTP request interception and mocking library. Supports URL matching, templates, regex, wildcards, and pass-through.
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/drown0315/http_hook
 issue_tracker: https://github.com/drown0315/http_hook/issues
 
