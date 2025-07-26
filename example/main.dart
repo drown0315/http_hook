@@ -197,14 +197,16 @@ Future<void> main() async {
 
   // This will make a real request (will likely fail since httpbin.org/get/real doesn't exist)
   try {
-    final realResponse = await http.get(Uri.parse('http://httpbin.org/get/real'));
+    final realResponse =
+        await http.get(Uri.parse('http://httpbin.org/get/real'));
     print('Real response: ${realResponse.body}');
   } catch (e) {
     print('Real request failed as expected: $e');
   }
 
   // This will return default mock
-  final defaultResponse = await http.get(Uri.parse('http://httpbin.org/get/other'));
+  final defaultResponse =
+      await http.get(Uri.parse('http://httpbin.org/get/other'));
   print('Default mock response: ${defaultResponse.body}\n');
 
   // Cleanup and stop Hook

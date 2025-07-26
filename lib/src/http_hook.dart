@@ -123,7 +123,7 @@ class HttpHook {
   }) {
     final String host;
     final String ruleKey;
-    
+
     if (defaultUrl != null) {
       final uri = Uri.parse(defaultUrl);
       host = uri.host;
@@ -132,7 +132,7 @@ class HttpHook {
       host = '*'; // Wildcard for any host
       ruleKey = '*$template';
     }
-    
+
     _rules[ruleKey] = _HttpHookRule(
       pattern: '$host$template',
       method: method,
@@ -158,7 +158,7 @@ class HttpHook {
   }) {
     final String host;
     final String ruleKey;
-    
+
     if (defaultUrl != null) {
       final uri = Uri.parse(defaultUrl);
       host = uri.host;
@@ -167,7 +167,7 @@ class HttpHook {
       host = '*'; // Wildcard for any host
       ruleKey = '*|||${regex.pattern}';
     }
-    
+
     _rules[ruleKey] = _HttpHookRule(
       pattern: '$host|||${regex.pattern}',
       method: method,
@@ -188,7 +188,7 @@ class HttpHook {
     required String template,
   }) {
     final String ruleKey;
-    
+
     if (defaultUrl != null) {
       final uri = Uri.parse(defaultUrl);
       final host = uri.host;
@@ -196,7 +196,7 @@ class HttpHook {
     } else {
       ruleKey = '*$template';
     }
-    
+
     _rules.remove(ruleKey);
   }
 
@@ -207,7 +207,7 @@ class HttpHook {
     required RegExp regex,
   }) {
     final String ruleKey;
-    
+
     if (defaultUrl != null) {
       final uri = Uri.parse(defaultUrl);
       final host = uri.host;
@@ -215,7 +215,7 @@ class HttpHook {
     } else {
       ruleKey = '*|||${regex.pattern}';
     }
-    
+
     _rules.remove(ruleKey);
   }
 
@@ -341,7 +341,7 @@ class HttpHook {
 
     final expectedHost = pattern.substring(0, separatorIndex);
     final regexPattern = pattern.substring(separatorIndex + 3);
-    
+
     // Skip host check if wildcard is used
     if (expectedHost != '*' && url.host != expectedHost) {
       return null;
