@@ -494,7 +494,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  http_hook: ^0.0.3
+  http_hook: ^0.0.4
 ```
 
 ## 💡 Use Cases
