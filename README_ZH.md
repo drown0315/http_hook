@@ -190,7 +190,7 @@ HttpHookResponse.ok('纯文本响应')
 ### 错误响应
 
 ```dart
-HttpHookResponse.error(404, body: '未找到')
+HttpHookResponse(statusCode: 404, body: '未找到')
 ```
 
 ### 自定义响应

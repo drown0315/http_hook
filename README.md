@@ -187,10 +187,65 @@ HttpHookResponse.json({'key': 'value'})
 HttpHookResponse.ok('Plain text response')
 ```
 
+### Binary Responses
+
+```dart
+// Binary data
+HttpHookResponse.binary(
+  [0x89, 0x50, 0x4E, 0x47], // PNG header
+  contentType: 'image/png',
+);
+
+// Or use the general constructor
+HttpHookResponse(
+  statusCode: 200,
+  body: [0x48, 0x65, 0x6C, 0x6C, 0x6F], // "Hello" in bytes
+  headers: {'content-type': 'application/octet-stream'},
+);
+```
+
+### Streaming Responses
+
+```dart
+// Stream data chunks
+HttpHookResponse.stream(
+  Stream.fromIterable([
+    utf8.encode('Hello'),
+    utf8.encode(' '),
+    utf8.encode('World'),
+  ]),
+  contentType: 'text/plain',
+);
+```
+
+### Async Handler Responses
+
+```dart
+// Async handler with string response
+HttpHook.on(
+  'http://api.example.com/async',
+  method: HttpHookMethod.get,
+  respond: (req, match) async {
+    final data = await someAsyncOperation();
+    return HttpHookResponse.ok(data);
+  },
+);
+
+// Async handler with stream response
+HttpHook.on(
+  'http://api.example.com/stream',
+  method: HttpHookMethod.get,
+  respond: (req, match) async {
+    final stream = await getDataStream();
+    return HttpHookResponse.stream(stream);
+  },
+);
+```
+
 ### Error Responses
 
 ```dart
-HttpHookResponse.error(404, body: 'Not Found')
+HttpHookResponse(statusCode: 404, body: 'Not Found')
 ```
 
 ### Custom Responses
@@ -377,6 +432,28 @@ class MatchResult {
   final Map<String, String>? params;     // Template parameters
   final RegExpMatch? regexMatch;         // Regex match groups
 }
+```
+
+### HttpHookResponse
+
+Response factory methods for creating mock responses:
+
+```dart
+// Success responses
+HttpHookResponse.ok('Success!')                    // 200 OK
+HttpHookResponse.json({'key': 'value'})            // 200 OK with JSON
+HttpHookResponse.binary([0x48, 0x65, 0x6C, 0x6C]) // 200 OK with binary data
+HttpHookResponse.stream(stream)                     // 200 OK with streaming data
+
+// Error responses
+HttpHookResponse.notFound('Resource not found')           // 404 Not Found
+HttpHookResponse.internalServerError('Server error')      // 500 Internal Server Error
+HttpHookResponse.badRequest('Invalid parameters')         // 400 Bad Request
+HttpHookResponse.unauthorized('Invalid credentials')      // 401 Unauthorized
+HttpHookResponse.forbidden('Access denied')              // 403 Forbidden
+
+// Pass-through (let real request proceed)
+HttpHookResponse.passThrough()
 ```
 
 ### Removing Hooks
