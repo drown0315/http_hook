@@ -417,7 +417,7 @@ HttpHook.destroy();
 
 ```yaml
 dev_dependencies:
-  http_hook: ^0.0.3
+  http_hook: ^0.0.4
 ```
 
 ## 💡 使用场景
