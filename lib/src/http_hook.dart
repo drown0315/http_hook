@@ -641,10 +641,23 @@ class _MockHttpClientResponse extends Stream<List<int>>
       headers.set(key, value);
     });
 
-    final data = _response.body.isNotEmpty
-        ? [utf8.encode(_response.body)]
-        : <List<int>>[];
-    _stream = Stream.fromIterable(data);
+    // Handle different body types
+    _stream = _createStreamFromBody(_response.body);
+  }
+
+  Stream<List<int>> _createStreamFromBody(dynamic body) {
+    if (body is String) {
+      return body.isNotEmpty
+          ? Stream.fromIterable([utf8.encode(body)])
+          : Stream.empty();
+    } else if (body is List<int>) {
+      return Stream.value(body);
+    } else if (body is Stream<List<int>>) {
+      return body;
+    } else {
+      // Default to empty stream for unsupported types
+      return Stream.empty();
+    }
   }
 
   final HttpHookResponse _response;
@@ -835,7 +848,18 @@ class _MockHttpClientResponse extends Stream<List<int>>
   HttpConnectionInfo? get connectionInfo => null;
 
   @override
-  int get contentLength => _response.body.length;
+  int get contentLength {
+    final body = _response.body;
+    if (body is String) {
+      return body.length;
+    } else if (body is List<int>) {
+      return body.length;
+    } else if (body is Stream<List<int>>) {
+      return -1; // Unknown length for streams
+    } else {
+      return 0;
+    }
+  }
 
   @override
   List<Cookie> get cookies => [];

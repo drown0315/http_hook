@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 /// Represents a mock HTTP response.
 ///
@@ -32,10 +33,27 @@ class HttpHookResponse {
   /// ```
   final Map<String, String> headers;
 
-  /// The response body, as a plain string.
+  /// The response body, which can be:
+  /// - String: Plain text or JSON string
+  /// - List<int>: Raw bytes (e.g., for binary data)
+  /// - Stream<List<int>>: Streaming response
   ///
-  /// If you're returning JSON, consider using [HttpHookResponse.json].
-  final String body;
+  /// Examples:
+  /// ```dart
+  /// // String response
+  /// HttpHookResponse(body: 'Hello World');
+  ///
+  /// // Binary response
+  /// HttpHookResponse(body: [0x89, 0x50, 0x4E, 0x47]); // PNG header
+  ///
+  /// // Streaming response
+  /// HttpHookResponse(body: Stream.fromIterable([
+  ///   utf8.encode('Hello'),
+  ///   utf8.encode(' '),
+  ///   utf8.encode('World'),
+  /// ]));
+  /// ```
+  final dynamic body;
 
   /// An optional human-readable reason phrase.
   ///
@@ -72,13 +90,15 @@ class HttpHookResponse {
 
   /// Creates a simple 200 OK response.
   ///
-  /// [body] Optional response body as string. Defaults to empty string.
+  /// [body] Optional response body. Can be String, List<int>, or Stream<List<int>>.
+  /// Defaults to empty string.
   ///
   /// Example:
   /// ```dart
   /// HttpHookResponse.ok('pong');
+  /// HttpHookResponse.ok([0x48, 0x65, 0x6C, 0x6C, 0x6F]); // "Hello" in bytes
   /// ```
-  factory HttpHookResponse.ok([String body = '']) {
+  factory HttpHookResponse.ok([dynamic body = '']) {
     return HttpHookResponse(
       statusCode: 200,
       body: body,
@@ -117,37 +137,177 @@ class HttpHookResponse {
     );
   }
 
-  /// Creates an error response with a given status code and optional body,
-  /// reason phrase, and headers.
+  /// Creates a 404 Not Found response.
   ///
-  /// [statusCode] The HTTP status code representing the error.
-  ///
-  /// [body] Optional response body as string. Defaults to empty.
-  ///
-  /// [reasonPhrase] Optional human-readable status message.
-  ///
-  /// [headers] Optional additional response headers.
+  /// [body] Optional response body. Defaults to 'Not Found'.
   ///
   /// Example:
   /// ```dart
-  /// HttpHookResponse.error(404, body: 'Not Found');
+  /// HttpHookResponse.notFound();
+  /// HttpHookResponse.notFound('Resource not found');
   /// ```
-  factory HttpHookResponse.error(
-    int statusCode, {
-    String? body,
-    String? reasonPhrase,
+  factory HttpHookResponse.notFound([String body = 'Not Found']) {
+    return HttpHookResponse(
+      statusCode: 404,
+      body: body,
+      reasonPhrase: 'Not Found',
+      headers: const {},
+    );
+  }
+
+  /// Creates a 500 Internal Server Error response.
+  ///
+  /// [body] Optional response body. Defaults to 'Internal Server Error'.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.internalServerError();
+  /// HttpHookResponse.internalServerError('Database connection failed');
+  /// ```
+  factory HttpHookResponse.internalServerError(
+      [String body = 'Internal Server Error']) {
+    return HttpHookResponse(
+      statusCode: 500,
+      body: body,
+      reasonPhrase: 'Internal Server Error',
+      headers: const {},
+    );
+  }
+
+  /// Creates a 400 Bad Request response.
+  ///
+  /// [body] Optional response body. Defaults to 'Bad Request'.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.badRequest();
+  /// HttpHookResponse.badRequest('Invalid parameters');
+  /// ```
+  factory HttpHookResponse.badRequest([String body = 'Bad Request']) {
+    return HttpHookResponse(
+      statusCode: 400,
+      body: body,
+      reasonPhrase: 'Bad Request',
+      headers: const {},
+    );
+  }
+
+  /// Creates a 401 Unauthorized response.
+  ///
+  /// [body] Optional response body. Defaults to 'Unauthorized'.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.unauthorized();
+  /// HttpHookResponse.unauthorized('Invalid credentials');
+  /// ```
+  factory HttpHookResponse.unauthorized([String body = 'Unauthorized']) {
+    return HttpHookResponse(
+      statusCode: 401,
+      body: body,
+      reasonPhrase: 'Unauthorized',
+      headers: const {},
+    );
+  }
+
+  /// Creates a 403 Forbidden response.
+  ///
+  /// [body] Optional response body. Defaults to 'Forbidden'.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.forbidden();
+  /// HttpHookResponse.forbidden('Access denied');
+  /// ```
+  factory HttpHookResponse.forbidden([String body = 'Forbidden']) {
+    return HttpHookResponse(
+      statusCode: 403,
+      body: body,
+      reasonPhrase: 'Forbidden',
+      headers: const {},
+    );
+  }
+
+  /// Creates a response with binary data.
+  ///
+  /// [data] The binary data as List<int>.
+  ///
+  /// [contentType] The content type header. Defaults to 'application/octet-stream'.
+  ///
+  /// [statusCode] The HTTP status code. Defaults to 200.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.binary(
+  ///   [0x89, 0x50, 0x4E, 0x47], // PNG header
+  ///   contentType: 'image/png',
+  /// );
+  /// ```
+  factory HttpHookResponse.binary(
+    List<int> data, {
+    String contentType = 'application/octet-stream',
+    int statusCode = 200,
     Map<String, String>? headers,
   }) {
+    final binaryHeaders = <String, String>{
+      'content-type': contentType,
+      ...?headers,
+    };
+
     return HttpHookResponse(
       statusCode: statusCode,
-      body: body ?? '',
-      reasonPhrase: reasonPhrase,
-      headers: headers ?? const {},
+      headers: binaryHeaders,
+      body: data,
+    );
+  }
+
+  /// Creates a streaming response.
+  ///
+  /// [stream] The stream of data chunks.
+  ///
+  /// [contentType] The content type header. Defaults to 'text/plain'.
+  ///
+  /// [statusCode] The HTTP status code. Defaults to 200.
+  ///
+  /// Example:
+  /// ```dart
+  /// HttpHookResponse.stream(
+  ///   Stream.fromIterable([
+  ///     utf8.encode('Hello'),
+  ///     utf8.encode(' '),
+  ///     utf8.encode('World'),
+  ///   ]),
+  ///   contentType: 'text/plain',
+  /// );
+  /// ```
+  factory HttpHookResponse.stream(
+    Stream<List<int>> stream, {
+    String contentType = 'text/plain',
+    int statusCode = 200,
+    Map<String, String>? headers,
+  }) {
+    final streamHeaders = <String, String>{
+      'content-type': contentType,
+      ...?headers,
+    };
+
+    return HttpHookResponse(
+      statusCode: statusCode,
+      headers: streamHeaders,
+      body: stream,
     );
   }
 
   @override
   String toString() {
-    return 'HttpHookResponse(statusCode: $statusCode, body: ${body.length} chars)';
+    final bodyType = body.runtimeType.toString();
+    final bodyLength = body is String
+        ? body.length
+        : body is List<int>
+            ? body.length
+            : body is Stream<List<int>>
+                ? 'stream'
+                : 'future';
+    return 'HttpHookResponse(statusCode: $statusCode, body: $bodyType($bodyLength))';
   }
 }
